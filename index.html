@@ -343,10 +343,18 @@ function renderCards(drawn){
     num.className='card-num';
     num.textContent=i+1;
     const img=document.createElement('img');
-    img.src=c.src;
+    img.src=encodeURI(c.src);
     img.alt='第'+(i+1)+'张';
     img.loading='lazy';
-    img.onerror=()=>{img.style.display='none';imgWrap.style.minHeight='120px';};
+    img.onerror=()=>{
+      img.style.display='none';
+      imgWrap.style.minHeight='120px';
+      const fallback=document.createElement('div');
+      fallback.style.cssText='display:flex;align-items:center;justify-content:center;min-height:120px;padding:10px;color:var(--text2);font-size:12px;text-align:center;line-height:1.4;';
+      fallback.textContent='图片加载失败：'+c.src;
+      imgWrap.appendChild(fallback);
+      console.warn('Image load failed:',c.src);
+    };
     imgWrap.appendChild(img);
     imgWrap.appendChild(num);
     item.appendChild(imgWrap);
