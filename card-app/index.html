@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="神秘牌阵">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>神秘牌阵</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=Cinzel:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0d0a1a;
+    --bg2: #13101f;
+    --bg3: #1a1628;
+    --gold: #c9a84c;
+    --gold2: #e8c97a;
+    --gold3: #f5e4a8;
+    --text: #e8dfc8;
+    --text2: #a89880;
+    --border: rgba(201,168,76,0.25);
+    --border2: rgba(201,168,76,0.5);
+    --radius: 12px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bot: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif SC', serif;
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bot);
+  }
+
+  /* ── Stars background ── */
+  #stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(100,60,180,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(40,20,100,0.2) 0%, transparent 60%);
+  }
+
+  .star {
+    position: absolute;
+    width: 2px; height: 2px;
+    border-radius: 50%;
+    background: rgba(255,255,220,0.7);
+    animation: twinkle var(--d, 3s) ease-in-out infinite var(--delay, 0s);
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.5); }
+  }
+
+  /* ── Layout screens ── */
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    padding: calc(var(--safe-top) + 16px) 20px calc(var(--safe-bot) + 20px);
+    z-index: 1;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+  }
+
+  /* ── Setup screen ── */
+  #setup {
+    justify-content: center;
+    gap: 28px;
+    align-items: center;
+  }
+
+  .title-area {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .title-en {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.8;
+  }
+
+  .title-zh {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--gold3);
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+  }
+
+  .divider {
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+    margin: 12px auto 0;
+  }
+
+  .section {
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-family: 'Cinzel', serif;
+    opacity: 0.8;
+  }
+
+  /* Deck selector */
+  .deck-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .deck-btn {
+    padding: 16px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg2);
+    color: var(--text2);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.25s;
+    font-family: 'Noto Serif SC', serif;
+  }
+
+  .deck-btn .deck-icon {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
+
+  .deck-btn .deck-name {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .deck-btn .deck-count {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 3px;
+  }
+
+  .deck-btn.active {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.08);
+    box-shadow: 0 0 16px rgba(201,168,76,0.15), inset 0 0 20px rgba(201,168,76,0.05);
+  }
+
+  .deck-btn.active .deck-name {
+    color: var(--gold2);
+  }
+
+  /* Count selector */
+  .count-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg2);
+    overflow: hidden;
+  }
+
+  .count-btn {
+    width: 52px;
+    height: 52px;
+    background: none;
+    border: none;
+    color: var(--gold);
+    font-size: 22px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+    font-family: serif;
+  }
+
+  .count-btn:active { background: rgba(201,168,76,0.12); }
+
+  .count-display {
+    flex: 1;
+    text-align: center;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--gold3);
+    letter-spacing: 0.05em;
+    font-family: 'Cinzel', serif;
+  }
+
+  .count-sub {
+    font-size: 11px;
+    color: var(--text2);
+    text-align: center;
+    margin-top: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  /* Start button */
+  .start-btn {
+    width: 100%;
+    max-width: 340px;
+    padding: 18px;
+    border: 1px solid var(--gold);
+    border-radius: var(--radius);
+    background: rgba(201,168,76,0.1);
+    color: var(--gold2);
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    letter-spacing: 0.25em;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .start-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .start-btn:active::before { opacity: 1; }
+  .start-btn:active { transform: scale(0.98); }
+
+  .start-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: var(--border);
+  }
+
+  /* Error notice */
+  .error-msg {
+    font-size: 12px;
+    color: #c97c7c;
+    text-align: center;
+    padding: 8px;
+    display: none;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Result screen ── */
+  #result {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .back-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--gold);
+    padding: 8px 16px;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.1em;
+  }
+
+  .back-btn:active {
+    background: rgba(201,168,76,0.1);
+    transform: scale(0.97);
+  }
+
+  .result-title {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .result-info {
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 0.1em;
+  }
+
+  /* Card grid */
+  .cards-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px 0 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 2), 1fr);
+    gap: 14px;
+    padding-bottom: 12px;
+  }
+
+  /* 1 card = centered, large */
+  .cards-grid.count-1 {
+    grid-template-columns: 1fr;
+    max-width: 240px;
+    margin: 0 auto;
+  }
+
+  /* 3+ cards may go 3 cols on wider */
+  .cards-grid.count-3,
+  .cards-grid.count-6,
+  .cards-grid.count-9 {
+    --cols: 3;
+  }
+
+  .card-item {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    aspect-ratio: 2/3;
+    animation: cardReveal 0.5s ease both;
+  }
+
+  .card-item:nth-child(1) { animation-delay: 0.05s; }
+  .card-item:nth-child(2) { animation-delay: 0.1s; }
+  .card-item:nth-child(3) { animation-delay: 0.15s; }
+  .card-item:nth-child(4) { animation-delay: 0.2s; }
+  .card-item:nth-child(5) { animation-delay: 0.25s; }
+  .card-item:nth-child(6) { animation-delay: 0.3s; }
+  .card-item:nth-child(7) { animation-delay: 0.35s; }
+  .card-item:nth-child(8) { animation-delay: 0.4s; }
+  .card-item:nth-child(9) { animation-delay: 0.45s; }
+  .card-item:nth-child(10) { animation-delay: 0.5s; }
+
+  @keyframes cardReveal {
+    from { opacity: 0; transform: scale(0.85) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .card-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card-num {
+    position: absolute;
+    top: 6px; left: 6px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: rgba(13,10,26,0.75);
+    border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    color: var(--gold);
+    backdrop-filter: blur(4px);
+  }
+
+  /* Loading overlay */
+  #loading {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px;
+    z-index: 100;
+    transition: opacity 0.4s;
+  }
+
+  #loading.gone {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .loading-symbol {
+    font-size: 36px;
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  /* Redraw button */
+  .redraw-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text2);
+    padding: 8px 14px;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.08em;
+  }
+
+  .redraw-btn:active {
+    color: var(--gold);
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.08);
+  }
+
+  /* scrollbar */
+  .cards-scroll::-webkit-scrollbar { width: 3px; }
+  .cards-scroll::-webkit-scrollbar-track { background: transparent; }
+  .cards-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Stars -->
+<div id="stars"></div>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="loading-symbol">✦</div>
+  <div class="loading-text">Loading</div>
+</div>
+
+<!-- Setup Screen -->
+<div class="screen" id="setup">
+  <div class="title-area">
+    <div class="title-en">Divination</div>
+    <div class="title-zh">神秘牌阵</div>
+    <div class="divider"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">选择牌组</div>
+    <div class="deck-selector">
+      <button class="deck-btn active" id="btn-tarot" onclick="selectDeck('tarot')">
+        <div class="deck-icon">🌙</div>
+        <div class="deck-name">塔罗</div>
+        <div class="deck-count" id="tarot-count">-- 张</div>
+      </button>
+      <button class="deck-btn" id="btn-lenormand" onclick="selectDeck('lenormand')">
+        <div class="deck-icon">✦</div>
+        <div class="deck-name">雷诺曼</div>
+        <div class="deck-count" id="lenormand-count">-- 张</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">抽取张数</div>
+    <div class="count-row">
+      <button class="count-btn" onclick="changeCount(-1)">−</button>
+      <div class="count-display" id="count-display">3</div>
+      <button class="count-btn" onclick="changeCount(1)">＋</button>
+    </div>
+    <div class="count-sub" id="count-sub">最多可抽 -- 张</div>
+  </div>
+
+  <div class="error-msg" id="error-msg">请先放置 cards-manifest.json 并刷新页面</div>
+
+  <button class="start-btn" id="start-btn" onclick="startDraw()">
+    ✦ &nbsp; 开始占卜 &nbsp; ✦
+  </button>
+</div>
+
+<!-- Result Screen -->
+<div class="screen hidden" id="result">
+  <div class="result-header">
+    <button class="back-btn" onclick="showSetup()">← 返回</button>
+    <div class="result-title">牌阵</div>
+    <button class="redraw-btn" onclick="startDraw()">重抽</button>
+  </div>
+  <div class="cards-scroll">
+    <div class="cards-grid" id="cards-grid"></div>
+  </div>
+</div>
+
+<script>
+// ── Stars ──
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 60; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${Math.random()*4}s;opacity:${0.3+Math.random()*0.7}`;
+  starsEl.appendChild(s);
+}
+
+// ── State ──
+let manifest = { tarot: [], lenormand: [] };
+let deck = 'tarot';
+let count = 3;
+let loaded = false;
+
+// ── Load manifest ──
+async function loadManifest() {
+  try {
+    const r = await fetch('./cards-manifest.json?t=' + Date.now());
+    if (!r.ok) throw new Error('not found');
+    manifest = await r.json();
+    loaded = true;
+    document.getElementById('tarot-count').textContent = manifest.tarot.length + ' 张';
+    document.getElementById('lenormand-count').textContent = manifest.lenormand.length + ' 张';
+    updateCountSub();
+    document.getElementById('start-btn').disabled = false;
+  } catch {
+    loaded = false;
+    document.getElementById('error-msg').style.display = 'block';
+    document.getElementById('start-btn').disabled = true;
+    document.getElementById('tarot-count').textContent = '未找到';
+    document.getElementById('lenormand-count').textContent = '未找到';
+  }
+  document.getElementById('loading').classList.add('gone');
+}
+
+// ── Deck selection ──
+function selectDeck(d) {
+  deck = d;
+  document.getElementById('btn-tarot').classList.toggle('active', d === 'tarot');
+  document.getElementById('btn-lenormand').classList.toggle('active', d === 'lenormand');
+  const max = manifest[deck].length;
+  if (count > max && max > 0) {
+    count = Math.min(count, max);
+    document.getElementById('count-display').textContent = count;
+  }
+  updateCountSub();
+}
+
+// ── Count ──
+function changeCount(delta) {
+  const max = loaded ? manifest[deck].length : 78;
+  count = Math.max(1, Math.min(max, count + delta));
+  document.getElementById('count-display').textContent = count;
+  updateCountSub();
+}
+
+function updateCountSub() {
+  const max = loaded ? manifest[deck].length : '--';
+  document.getElementById('count-sub').textContent = '最多可抽 ' + max + ' 张';
+}
+
+// ── Fisher-Yates shuffle & draw ──
+function drawCards(arr, n) {
+  const pool = [...arr];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, n);
+}
+
+// ── Start draw ──
+function startDraw() {
+  if (!loaded) return;
+  const cards = drawCards(manifest[deck], count);
+  renderCards(cards);
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+}
+
+// ── Render cards ──
+function renderCards(cards) {
+  const grid = document.getElementById('cards-grid');
+  grid.innerHTML = '';
+
+  // Set column count class
+  grid.className = 'cards-grid count-' + cards.length;
+
+  cards.forEach((src, i) => {
+    const item = document.createElement('div');
+    item.className = 'card-item';
+
+    const num = document.createElement('div');
+    num.className = 'card-num';
+    num.textContent = i + 1;
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = '第' + (i+1) + '张牌';
+    img.loading = 'lazy';
+    img.onerror = () => {
+      item.style.background = 'rgba(201,168,76,0.05)';
+      item.style.display = 'flex';
+      item.style.alignItems = 'center';
+      item.style.justifyContent = 'center';
+      img.style.display = 'none';
+      const txt = document.createElement('div');
+      txt.textContent = '?';
+      txt.style.cssText = 'font-size:32px;opacity:0.3;';
+      item.appendChild(txt);
+    };
+
+    item.appendChild(img);
+    item.appendChild(num);
+    grid.appendChild(item);
+  });
+
+  // Scroll to top
+  document.querySelector('.cards-scroll').scrollTop = 0;
+}
+
+// ── Back to setup ──
+function showSetup() {
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('setup').classList.remove('hidden');
+}
+
+// ── PWA Service Worker ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// ── Init ──
+loadManifest();
+</script>
+</body>
+</html>
