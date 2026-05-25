@@ -332,22 +332,8 @@
   .cards-grid {
     display: grid;
     grid-template-columns: repeat(var(--cols, 2), 1fr);
-    gap: 14px;
+    gap: 10px;
     padding-bottom: 12px;
-  }
-
-  /* 1 card = centered, large */
-  .cards-grid.count-1 {
-    grid-template-columns: 1fr;
-    max-width: 240px;
-    margin: 0 auto;
-  }
-
-  /* 3+ cards may go 3 cols on wider */
-  .cards-grid.count-3,
-  .cards-grid.count-6,
-  .cards-grid.count-9 {
-    --cols: 3;
   }
 
   .card-item {
@@ -356,7 +342,6 @@
     overflow: hidden;
     border: 1px solid var(--border);
     background: var(--bg3);
-    aspect-ratio: 2/3;
     animation: cardReveal 0.5s ease both;
   }
 
@@ -378,8 +363,7 @@
 
   .card-item img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
     display: block;
   }
 
@@ -604,17 +588,41 @@ function startDraw() {
   document.getElementById('result').classList.remove('hidden');
 }
 
+// ── Dynamic columns ──
+function calcCols(n) {
+  const w = window.innerWidth;
+  if (n === 1) return 1;
+  if (n === 2) return 2;
+  // On narrow screens (iPhone: ~390px), fit cards so each is at least 100px wide
+  const maxCols = Math.floor((w - 40) / 110); // 40px padding, 110px min card width
+  if (n <= 3) return Math.min(n, maxCols);
+  if (n <= 6) return Math.min(3, maxCols);
+  if (n <= 8) return Math.min(4, maxCols);
+  return Math.min(4, maxCols);
+}
+
 // ── Render cards ──
 function renderCards(cards) {
   const grid = document.getElementById('cards-grid');
   grid.innerHTML = '';
 
-  // Set column count class
-  grid.className = 'cards-grid count-' + cards.length;
+  const cols = calcCols(cards.length);
+  grid.style.setProperty('--cols', cols);
+  grid.className = 'cards-grid';
+
+  // Center single card
+  if (cards.length === 1) {
+    grid.style.maxWidth = '200px';
+    grid.style.margin = '0 auto';
+  } else {
+    grid.style.maxWidth = '';
+    grid.style.margin = '';
+  }
 
   cards.forEach((src, i) => {
     const item = document.createElement('div');
     item.className = 'card-item';
+    item.style.animationDelay = (i * 0.06) + 's';
 
     const num = document.createElement('div');
     num.className = 'card-num';
@@ -625,10 +633,7 @@ function renderCards(cards) {
     img.alt = '第' + (i+1) + '张牌';
     img.loading = 'lazy';
     img.onerror = () => {
-      item.style.background = 'rgba(201,168,76,0.05)';
-      item.style.display = 'flex';
-      item.style.alignItems = 'center';
-      item.style.justifyContent = 'center';
+      item.style.cssText += ';background:rgba(201,168,76,0.05);min-height:120px;display:flex;align-items:center;justify-content:center;';
       img.style.display = 'none';
       const txt = document.createElement('div');
       txt.textContent = '?';
@@ -641,7 +646,6 @@ function renderCards(cards) {
     grid.appendChild(item);
   });
 
-  // Scroll to top
   document.querySelector('.cards-scroll').scrollTop = 0;
 }
 
