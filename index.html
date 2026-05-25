@@ -90,11 +90,12 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 /* Card grid */
 .cards-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 0 8px;-webkit-overflow-scrolling:touch;}
 .cards-grid{display:grid;grid-template-columns:repeat(var(--cols,2),1fr);gap:10px;}
-.card-item{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--bg3);animation:cardReveal 0.5s ease both;}
+.card-item{position:relative;border-radius:10px;border:1px solid var(--border);background:var(--bg3);animation:cardReveal 0.5s ease both;display:flex;flex-direction:column;}
+.card-img-wrap{position:relative;overflow:hidden;border-radius:10px 10px 0 0;flex:1;}
 .card-item img{width:100%;height:auto;display:block;}
 .card-item.reversed img{transform:rotate(180deg);}
 .card-num{position:absolute;top:5px;left:5px;width:18px;height:18px;border-radius:50%;background:rgba(13,10,26,0.8);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:9px;color:var(--gold);}
-.reversed-badge{position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:9px;color:var(--gold);background:rgba(13,10,26,0.75);padding:2px 0;letter-spacing:0.1em;}
+.reversed-badge{text-align:center;font-size:9px;color:var(--gold);background:rgba(13,10,26,0.9);padding:4px 0;letter-spacing:0.12em;border-top:1px solid var(--border);border-radius:0 0 10px 10px;}
 @keyframes cardReveal{from{opacity:0;transform:scale(0.85) translateY(12px);}to{opacity:1;transform:scale(1) translateY(0);}}
 
 /* Info bar */
@@ -333,6 +334,8 @@ function renderCards(drawn){
     const item=document.createElement('div');
     item.className='card-item'+(c.reversed?' reversed':'');
     item.style.animationDelay=(i*0.06)+'s';
+    const wrap=document.createElement('div');
+    wrap.className='card-img-wrap';
     const num=document.createElement('div');
     num.className='card-num';
     num.textContent=i+1;
@@ -340,9 +343,10 @@ function renderCards(drawn){
     img.src=c.src;
     img.alt='第'+(i+1)+'张';
     img.loading='lazy';
-    img.onerror=()=>{img.style.display='none';item.style.minHeight='120px';};
-    item.appendChild(img);
-    item.appendChild(num);
+    img.onerror=()=>{img.style.display='none';wrap.style.minHeight='120px';};
+    wrap.appendChild(img);
+    wrap.appendChild(num);
+    item.appendChild(wrap);
     if(c.reversed){
       const badge=document.createElement('div');
       badge.className='reversed-badge';
