@@ -68,9 +68,13 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 
 /* Question input */
 .question-wrap{width:100%;max-width:340px;}
-.question-input{width:100%;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Noto Serif SC',serif;font-size:14px;resize:none;height:72px;outline:none;transition:border-color 0.2s;line-height:1.5;}
+.question-field{position:relative;}
+.question-input{width:100%;padding:16px 52px 16px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Noto Serif SC',serif;font-size:14px;resize:none;min-height:136px;height:136px;max-height:42dvh;outline:none;transition:border-color 0.2s;line-height:1.6;overflow-y:hidden;}
 .question-input::placeholder{color:var(--text2);opacity:0.5;}
 .question-input:focus{border-color:var(--border2);}
+.question-clear{position:absolute;top:10px;right:10px;border:1px solid var(--border);border-radius:999px;background:rgba(201,168,76,0.08);color:var(--text2);font-family:'Noto Serif SC',serif;font-size:11px;line-height:1;padding:7px 10px;cursor:pointer;transition:all 0.2s;}
+.question-clear:active{border-color:var(--gold);color:var(--gold2);}
+.question-clear.hidden{opacity:0;pointer-events:none;}
 
 /* Start button */
 .start-btn{width:100%;max-width:340px;padding:16px;border:1px solid var(--gold);border-radius:var(--radius);background:rgba(201,168,76,0.1);color:var(--gold2);font-family:'Cinzel',serif;font-size:14px;letter-spacing:0.25em;cursor:pointer;transition:all 0.3s;text-transform:uppercase;}
@@ -90,23 +94,31 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 
 /* Card grid */
 .cards-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 0 8px;-webkit-overflow-scrolling:touch;}
-.cards-grid{display:grid;grid-template-columns:repeat(var(--cols,2),1fr);gap:10px;}
-.card-item{position:relative;border-radius:10px;background:var(--bg3);animation:cardReveal 0.5s ease both;overflow:hidden;}
-.card-img-wrap{position:relative;}
-.card-item img{width:100%;height:auto;display:block;}
-.card-item.reversed img{transform:rotate(180deg);}
-.card-num{position:absolute;top:5px;left:5px;width:18px;height:18px;border-radius:50%;background:rgba(13,10,26,0.8);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:9px;color:var(--gold);}
-.card-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;}
-.reversed-badge{font-size:10px;color:var(--gold);background:rgba(201,168,76,0.08);padding:4px 16px;letter-spacing:0.15em;border-radius:6px;}
+.cards-grid{display:flex;flex-direction:column;gap:16px;}
+.card-reading{border:1px solid var(--border);border-radius:14px;background:rgba(26,22,40,0.82);padding:14px;display:flex;flex-direction:column;gap:14px;animation:cardReveal 0.5s ease both;}
+.card-reading-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.card-index{width:24px;height:24px;border-radius:50%;background:rgba(13,10,26,0.8);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:11px;color:var(--gold);flex-shrink:0;}
+.card-title-group{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.card-title{font-size:18px;font-weight:600;letter-spacing:0.05em;color:var(--gold3);}
+.card-state{font-size:11px;color:var(--text2);letter-spacing:0.12em;text-transform:uppercase;}
+.card-reading-body{display:grid;grid-template-columns:minmax(132px,160px) minmax(0,1fr);gap:12px;align-items:start;}
+.card-face-panel,.card-detail-panel{border:1px solid var(--border);border-radius:12px;background:rgba(13,10,26,0.55);overflow:hidden;}
+.card-face-panel{padding:8px;}
+.card-face-panel.reversed .card-face-img{transform:rotate(180deg);}
+.card-face-img,.card-detail-img{width:100%;height:auto;display:block;}
+.card-detail-panel{padding:10px;}
+.card-detail-caption{font-size:11px;color:var(--text2);letter-spacing:0.08em;padding:0 2px 8px;}
+.card-image-fallback{display:flex;align-items:center;justify-content:center;min-height:140px;padding:14px;color:var(--text2);font-size:12px;line-height:1.5;text-align:center;}
 @keyframes cardReveal{from{opacity:0;transform:scale(0.85) translateY(12px);}to{opacity:1;transform:scale(1) translateY(0);}}
 
 /* Info bar */
-.info-bar{flex-shrink:0;margin-top:10px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;position:relative;}
+.result-tools{display:flex;justify-content:flex-end;margin-top:10px;}
+.info-bar{flex-shrink:0;margin-top:10px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;}
 .info-question{font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5;}
 .info-question span{color:var(--text);margin-left:4px;}
 .info-cards{font-size:11px;color:var(--text2);line-height:1.7;word-break:break-all;}
 .info-cards span{color:var(--gold2);}
-.copy-btn{position:absolute;top:10px;right:10px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text2);padding:5px 8px;cursor:pointer;font-size:11px;transition:all 0.2s;display:flex;align-items:center;gap:4px;}
+.copy-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text2);padding:7px 10px;cursor:pointer;font-size:11px;transition:all 0.2s;display:flex;align-items:center;gap:4px;}
 .copy-btn:active{color:var(--gold);border-color:var(--gold);}
 .copy-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;}
 .copy-toast{position:fixed;bottom:calc(var(--safe-bot) + 24px);left:50%;transform:translateX(-50%);background:rgba(201,168,76,0.15);border:1px solid var(--gold);border-radius:8px;padding:8px 18px;font-size:12px;color:var(--gold2);letter-spacing:0.1em;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:99;}
@@ -120,6 +132,10 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 .loading-text{font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.25em;color:var(--gold);text-transform:uppercase;opacity:0.7;}
 .cards-scroll::-webkit-scrollbar{width:3px;}
 .cards-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+@media (max-width:760px){
+  .card-reading-body{grid-template-columns:1fr;}
+  .card-face-panel{max-width:180px;margin:0 auto;}
+}
 </style>
 </head>
 <body>
@@ -179,7 +195,10 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 
   <div class="question-wrap">
     <div class="section-label">我的问题</div>
-    <textarea class="question-input" id="question" placeholder="在此输入你想询问的问题…"></textarea>
+    <div class="question-field">
+      <textarea class="question-input" id="question" placeholder="在此输入你想询问的问题…"></textarea>
+      <button class="question-clear hidden" id="question-clear" type="button" onclick="clearQuestion()" title="清除文本">清空</button>
+    </div>
   </div>
 
   <button class="start-btn" id="start-btn" onclick="startDraw()">✦ &nbsp; 开始占卜 &nbsp; ✦</button>
@@ -198,11 +217,13 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
   <div class="cards-scroll">
     <div class="cards-grid" id="cards-grid"></div>
   </div>
-  <div class="info-bar" id="info-bar">
+  <div class="result-tools">
     <button class="copy-btn" onclick="copyInfo()" title="复制">
       <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-      复制
+      复制结果
     </button>
+  </div>
+  <div class="info-bar" id="info-bar">
     <div class="info-question" id="info-question"></div>
     <div class="info-cards" id="info-cards"></div>
   </div>
@@ -219,6 +240,18 @@ let deck='tarot';
 let lenVersion='traditional';
 let count=3;
 let lastDrawn=[];
+let lastQuestion='';
+const questionEl=document.getElementById('question');
+const questionClearEl=document.getElementById('question-clear');
+const LENORMAND_TITLES={
+  rider:'骑士',clover:'四叶草',ship:'船',house:'房子',tree:'树',clouds:'云',snake:'蛇',coffin:'棺材',
+  bouquet:'花束',scythe:'镰刀',whip:'鞭子',birds:'鸟',child:'孩童',fox:'狐狸',bear:'熊',star:'星星',
+  stork:'鹳',dog:'狗',tower:'塔',garden:'花园',mountain:'山',crossroads:'道路',mice:'老鼠',heart:'心',
+  ring:'戒指',book:'书',letter:'信',man:'男人',woman:'女人',lily:'百合花',sun:'太阳',moon:'月亮',
+  key:'钥匙',fish:'鱼',anchor:'锚',cross:'十字架',apple:'苹果',lamb:'羔羊',photo:'照片',console:'游戏机',
+  wardrobes:'衣柜',flag:'旗帜',hotSpring:'温泉',owl:'猫头鹰',pawn:'棋子',crown:'王冠',rocket:'火箭',cactus:'仙人掌'
+};
+const TAROT_NUMERALS={'10':'十','9':'九','8':'八','7':'七','6':'六','5':'五','4':'四','3':'三','2':'二'};
 
 // Version labels
 const VERSION_LABELS={
@@ -239,6 +272,7 @@ async function loadManifest(){
     document.getElementById('start-btn').disabled=true;
   }
   document.getElementById('loading').classList.add('gone');
+  resetQuestion();
 }
 
 function selectDeck(d){
@@ -282,26 +316,67 @@ function changeCount(delta){
   document.getElementById('count-display').textContent=count;
 }
 
-function calcCols(n){
-  const w=window.innerWidth;
-  const maxCols=Math.floor((w-40)/110);
-  if(n===1)return 1;
-  if(n===2)return 2;
-  if(n<=3)return Math.min(3,maxCols);
-  if(n<=6)return Math.min(3,maxCols);
-  return Math.min(4,maxCols);
-}
-
 function shuffle(arr){
   const a=[...arr];
   for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
   return a;
 }
 
+function getCardBaseName(src){
+  return decodeURIComponent(src).split('/').pop().replace(/\.png$/i,'');
+}
+
+function getCardTitle(src){
+  const base=getCardBaseName(src);
+  if(src.startsWith('tarot/')){
+    let title=base.replace(/10|9|8|7|6|5|4|3|2/g,m=>TAROT_NUMERALS[m]||m);
+    if(title.endsWith('ace'))title=title.replace(/ace$/,'王牌');
+    title=title.replace(/皇后/g,'女王');
+    if(title==='魔术师')title='魔法师';
+    if(title==='世界')title='宇宙';
+    return title;
+  }
+  return LENORMAND_TITLES[base]||base;
+}
+
+function getDetailImagePath(src){
+  return 'card-details/'+src;
+}
+
+function isTarotCard(src){
+  return src.startsWith('tarot/');
+}
+
+function autoResizeQuestion(){
+  const minHeight=136;
+  const maxHeight=Math.max(minHeight,Math.floor(window.innerHeight*0.42));
+  questionEl.style.height='auto';
+  const nextHeight=Math.min(Math.max(questionEl.scrollHeight,minHeight),maxHeight);
+  questionEl.style.height=nextHeight+'px';
+  questionEl.style.overflowY=questionEl.scrollHeight>maxHeight?'auto':'hidden';
+}
+
+function updateQuestionControls(){
+  questionClearEl.classList.toggle('hidden',!questionEl.value.trim());
+  autoResizeQuestion();
+}
+
+function clearQuestion(){
+  questionEl.value='';
+  updateQuestionControls();
+  questionEl.focus();
+}
+
+function resetQuestion(){
+  questionEl.value='';
+  updateQuestionControls();
+}
+
 function startDraw(){
   const pool=manifest[getDeckKey()];
   if(!pool||pool.length===0)return;
   const isTarot=deck==='tarot';
+  lastQuestion=questionEl.value.trim();
   const drawn=shuffle(pool).slice(0,count).map(src=>({
     src,
     reversed:isTarot&&Math.random()<0.5
@@ -312,14 +387,10 @@ function startDraw(){
   const vLabel=deck==='tarot'?VERSION_LABELS.tarot:VERSION_LABELS[lenVersion];
   document.getElementById('result-version').textContent=vLabel;
   // Info bar
-  const q=document.getElementById('question').value.trim();
   const qEl=document.getElementById('info-question');
-  if(q){qEl.innerHTML='问题：<span>'+escHtml(q)+'</span>';}
+  if(lastQuestion){qEl.innerHTML='问题：<span>'+escHtml(lastQuestion)+'</span>';}
   else{qEl.innerHTML='';}
-  const names=drawn.map(c=>{
-    const name=c.src.split('/').pop().replace(/\.png$/i,'');
-    return name+(c.reversed?' [逆位]':'');
-  });
+  const names=drawn.map(c=>getCardTitle(c.src)+(c.reversed?' [逆位]':''));
   document.getElementById('info-cards').innerHTML='抽到：<span>'+names.join('、')+'</span>';
   document.getElementById('setup').classList.add('hidden');
   document.getElementById('result').classList.remove('hidden');
@@ -328,45 +399,68 @@ function startDraw(){
 function renderCards(drawn){
   const grid=document.getElementById('cards-grid');
   grid.innerHTML='';
-  const cols=calcCols(drawn.length);
-  grid.style.setProperty('--cols',cols);
-  if(drawn.length===1){grid.style.maxWidth='200px';grid.style.margin='0 auto';}
-  else{grid.style.maxWidth='';grid.style.margin='';}
   drawn.forEach((c,i)=>{
-    const cardWrap=document.createElement('div');
-    cardWrap.className='card-wrap';
-    cardWrap.style.cssText='animation:cardReveal 0.5s ease both;animation-delay:'+(i*0.06)+'s';
-    const item=document.createElement('div');
-    item.className='card-item'+(c.reversed?' reversed':'');
-    const imgWrap=document.createElement('div');
-    imgWrap.className='card-img-wrap';
-    const num=document.createElement('div');
-    num.className='card-num';
-    num.textContent=i+1;
-    const img=document.createElement('img');
-    img.src=encodeURI(c.src);
-    img.alt='第'+(i+1)+'张';
-    img.loading='lazy';
-    img.onerror=()=>{
-      img.style.display='none';
-      imgWrap.style.minHeight='120px';
-      const fallback=document.createElement('div');
-      fallback.style.cssText='display:flex;align-items:center;justify-content:center;min-height:120px;padding:10px;color:var(--text2);font-size:12px;text-align:center;line-height:1.4;';
-      fallback.textContent='图片加载失败：'+c.src;
-      imgWrap.appendChild(fallback);
-      console.warn('Image load failed:',c.src);
-    };
-    imgWrap.appendChild(img);
-    imgWrap.appendChild(num);
-    item.appendChild(imgWrap);
-    cardWrap.appendChild(item);
-    if(c.reversed){
-      const badge=document.createElement('div');
-      badge.className='reversed-badge';
-      badge.textContent='逆位';
-      cardWrap.appendChild(badge);
-    }
-    grid.appendChild(cardWrap);
+    const title=getCardTitle(c.src);
+    const detailPath=getDetailImagePath(c.src);
+    const card=document.createElement('article');
+    card.className='card-reading';
+    card.style.animationDelay=(i*0.05)+'s';
+
+    const header=document.createElement('div');
+    header.className='card-reading-header';
+
+    const index=document.createElement('div');
+    index.className='card-index';
+    index.textContent=i+1;
+
+    const titleGroup=document.createElement('div');
+    titleGroup.className='card-title-group';
+
+    const titleEl=document.createElement('div');
+    titleEl.className='card-title';
+    titleEl.textContent=title;
+
+    const stateEl=document.createElement('div');
+    stateEl.className='card-state';
+    stateEl.textContent=isTarotCard(c.src)?(c.reversed?'逆位':'正位'):'牌义详解';
+
+    titleGroup.appendChild(titleEl);
+    titleGroup.appendChild(stateEl);
+    header.appendChild(index);
+    header.appendChild(titleGroup);
+
+    const body=document.createElement('div');
+    body.className='card-reading-body';
+
+    const facePanel=document.createElement('div');
+    facePanel.className='card-face-panel'+(c.reversed?' reversed':'');
+    const faceImg=document.createElement('img');
+    faceImg.className='card-face-img';
+    faceImg.src=encodeURI(c.src);
+    faceImg.alt=title+'卡面';
+    faceImg.loading='lazy';
+    faceImg.onerror=()=>renderImageFallback(facePanel,'卡面图片加载失败：'+c.src);
+    facePanel.appendChild(faceImg);
+
+    const detailPanel=document.createElement('div');
+    detailPanel.className='card-detail-panel';
+    const detailCaption=document.createElement('div');
+    detailCaption.className='card-detail-caption';
+    detailCaption.textContent='详细信息';
+    const detailImg=document.createElement('img');
+    detailImg.className='card-detail-img';
+    detailImg.src=encodeURI(detailPath);
+    detailImg.alt=title+'详细信息';
+    detailImg.loading='lazy';
+    detailImg.onerror=()=>renderImageFallback(detailPanel,'详情图尚未就绪：'+detailPath,detailCaption);
+    detailPanel.appendChild(detailCaption);
+    detailPanel.appendChild(detailImg);
+
+    body.appendChild(facePanel);
+    body.appendChild(detailPanel);
+    card.appendChild(header);
+    card.appendChild(body);
+    grid.appendChild(card);
   });
   document.querySelector('.cards-scroll').scrollTop=0;
 }
@@ -374,19 +468,26 @@ function renderCards(drawn){
 function showSetup(){
   document.getElementById('result').classList.add('hidden');
   document.getElementById('setup').classList.remove('hidden');
+  resetQuestion();
+  document.getElementById('setup').scrollTop=0;
+}
+
+function renderImageFallback(container,text,keepNode){
+  container.innerHTML='';
+  if(keepNode)container.appendChild(keepNode);
+  const fallback=document.createElement('div');
+  fallback.className='card-image-fallback';
+  fallback.textContent=text;
+  container.appendChild(fallback);
 }
 
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function copyInfo(){
-  const q=document.getElementById('question').value.trim();
-  const names=lastDrawn.map(c=>{
-    const name=c.src.split('/').pop().replace(/\.png$/i,'');
-    return name+(c.reversed?' [逆位]':'');
-  });
+  const names=lastDrawn.map(c=>getCardTitle(c.src)+(c.reversed?' [逆位]':''));
   const vLabel=deck==='tarot'?VERSION_LABELS.tarot:VERSION_LABELS[lenVersion];
   let text='';
-  if(q)text+='问题：'+q+'\n';
+  if(lastQuestion)text+='问题：'+lastQuestion+'\n';
   text+='牌组：'+vLabel+'\n';
   text+='抽到：'+names.join('、');
   navigator.clipboard.writeText(text).then(()=>{
@@ -397,6 +498,12 @@ function copyInfo(){
 }
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+questionEl.addEventListener('input',updateQuestionControls);
+window.addEventListener('resize',autoResizeQuestion);
+window.addEventListener('pageshow',()=>{
+  if(!document.getElementById('result').classList.contains('hidden'))return;
+  resetQuestion();
+});
 loadManifest();
 </script>
 </body>
