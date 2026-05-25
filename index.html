@@ -61,9 +61,11 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 
 /* Count */
 .count-row{display:flex;align-items:center;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);overflow:hidden;}
-.count-btn{width:52px;height:52px;background:none;border:none;color:var(--gold);font-size:22px;cursor:pointer;flex-shrink:0;transition:background 0.2s;}
+.count-btn{width:52px;height:52px;background:none;border:none;color:var(--gold);font-size:22px;cursor:pointer;flex-shrink:0;transition:background 0.2s;touch-action:manipulation;user-select:none;}
 .count-btn:active{background:rgba(201,168,76,0.12);}
-.count-display{flex:1;text-align:center;font-size:26px;font-weight:600;color:var(--gold3);font-family:'Cinzel',serif;}
+.count-display{flex:1;min-width:0;height:52px;background:none;border:none;text-align:center;font-size:26px;font-weight:600;color:var(--gold3);font-family:'Cinzel',serif;outline:none;padding:0 8px;appearance:textfield;-moz-appearance:textfield;}
+.count-display:focus{color:var(--gold2);}
+.count-display::-webkit-outer-spin-button,.count-display::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .count-sub{font-size:11px;color:var(--text2);text-align:center;margin-top:6px;letter-spacing:0.1em;}
 
 /* Question input */
@@ -186,9 +188,9 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
   <div class="section">
     <div class="section-label">抽取张数</div>
     <div class="count-row">
-      <button class="count-btn" onclick="changeCount(-1)">−</button>
-      <div class="count-display" id="count-display">3</div>
-      <button class="count-btn" onclick="changeCount(1)">＋</button>
+      <button class="count-btn" id="count-minus" type="button" data-delta="-1" aria-label="减少抽取张数">−</button>
+      <input class="count-display" id="count-display" type="text" inputmode="numeric" pattern="[0-9]*" value="3" aria-label="抽取张数">
+      <button class="count-btn" id="count-plus" type="button" data-delta="1" aria-label="增加抽取张数">＋</button>
     </div>
     <div class="count-sub" id="count-sub">最多可抽 78 张</div>
   </div>
@@ -243,6 +245,8 @@ let lastDrawn=[];
 let lastQuestion='';
 const questionEl=document.getElementById('question');
 const questionClearEl=document.getElementById('question-clear');
+const countDisplayEl=document.getElementById('count-display');
+const countButtons=[...document.querySelectorAll('.count-btn')];
 const LENORMAND_TITLES={
   rider:'骑士',clover:'四叶草',ship:'船',house:'房子',tree:'树',clouds:'云',snake:'蛇',coffin:'棺材',
   bouquet:'花束',scythe:'镰刀',whip:'鞭子',birds:'鸟',child:'孩童',fox:'狐狸',bear:'熊',star:'星星',
@@ -252,6 +256,8 @@ const LENORMAND_TITLES={
   wardrobes:'衣柜',flag:'旗帜',hotSpring:'温泉',owl:'猫头鹰',pawn:'棋子',crown:'王冠',rocket:'火箭',cactus:'仙人掌'
 };
 const TAROT_NUMERALS={'10':'十','9':'九','8':'八','7':'七','6':'六','5':'五','4':'四','3':'三','2':'二'};
+let countHoldTimeout=null;
+let countHoldInterval=null;
 
 // Version labels
 const VERSION_LABELS={
@@ -271,6 +277,7 @@ async function loadManifest(){
   }catch{
     document.getElementById('start-btn').disabled=true;
   }
+  syncCountDisplay();
   document.getElementById('loading').classList.add('gone');
   resetQuestion();
 }
@@ -305,15 +312,58 @@ function updateCountSub(){
   document.getElementById('count-sub').textContent='最多可抽 '+max+' 张';
 }
 
+function syncCountDisplay(){
+  countDisplayEl.value=String(count);
+}
+
+function setCount(next){
+  const max=getMax()||78;
+  const parsed=Number(next);
+  const fallback=Number.isFinite(count)?count:1;
+  const safe=Math.max(1,Math.min(max,Number.isFinite(parsed)?Math.trunc(parsed):fallback));
+  count=safe;
+  syncCountDisplay();
+  return count;
+}
+
 function clampCount(){
-  const max=getMax();
-  if(count>max&&max>0){count=max;document.getElementById('count-display').textContent=count;}
+  if(getMax()>0){setCount(count);}
+  else{syncCountDisplay();}
 }
 
 function changeCount(delta){
-  const max=getMax()||78;
-  count=Math.max(1,Math.min(max,count+delta));
-  document.getElementById('count-display').textContent=count;
+  setCount(count+delta);
+}
+
+function commitCountInput(){
+  const digits=countDisplayEl.value.replace(/[^\d]/g,'');
+  if(!digits){
+    syncCountDisplay();
+    return;
+  }
+  setCount(Number(digits));
+}
+
+function handleCountInput(){
+  const digits=countDisplayEl.value.replace(/[^\d]/g,'');
+  if(digits!==countDisplayEl.value){countDisplayEl.value=digits;}
+  if(!digits)return;
+  setCount(Number(digits));
+}
+
+function stopCountHold(){
+  clearTimeout(countHoldTimeout);
+  clearInterval(countHoldInterval);
+  countHoldTimeout=null;
+  countHoldInterval=null;
+}
+
+function startCountHold(delta){
+  stopCountHold();
+  changeCount(delta);
+  countHoldTimeout=setTimeout(()=>{
+    countHoldInterval=setInterval(()=>changeCount(delta),80);
+  },320);
 }
 
 function shuffle(arr){
@@ -498,6 +548,40 @@ function copyInfo(){
 }
 
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+countButtons.forEach(btn=>{
+  const delta=Number(btn.dataset.delta||0);
+  btn.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    if(btn.setPointerCapture&&e.pointerId!==undefined)btn.setPointerCapture(e.pointerId);
+    startCountHold(delta);
+  });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(eventName=>{
+    btn.addEventListener(eventName,stopCountHold);
+  });
+  btn.addEventListener('click',e=>e.preventDefault());
+  btn.addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key===' '){
+      e.preventDefault();
+      changeCount(delta);
+    }
+  });
+});
+countDisplayEl.addEventListener('focus',()=>countDisplayEl.select());
+countDisplayEl.addEventListener('input',handleCountInput);
+countDisplayEl.addEventListener('blur',commitCountInput);
+countDisplayEl.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    commitCountInput();
+    countDisplayEl.blur();
+  }else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    changeCount(1);
+  }else if(e.key==='ArrowDown'){
+    e.preventDefault();
+    changeCount(-1);
+  }
+});
 questionEl.addEventListener('input',updateQuestionControls);
 window.addEventListener('resize',autoResizeQuestion);
 window.addEventListener('pageshow',()=>{
