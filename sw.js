@@ -1,4 +1,4 @@
-const CACHE = 'card-app-v1.0.2';
+const CACHE = 'card-app-20260525063941';
 const ASSETS = [
   './',
   './index.html',
