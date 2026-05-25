@@ -3,8 +3,17 @@ const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './cards-manifest.json'
+  './cards-manifest.json',
 ];
+
+const canHandle = req => req.url.startsWith('http://') || req.url.startsWith('https://');
+const isCacheable = (req, res) => canHandle(req) && res && res.ok;
+
+function cacheResponse(req, res) {
+  if (!isCacheable(req, res)) return;
+  const clone = res.clone();
+  caches.open(CACHE).then(c => c.put(req, clone)).catch(() => {});
+}
 
 self.addEventListener('install', e => {
   e.waitUntil(
