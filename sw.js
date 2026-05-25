@@ -1,4 +1,4 @@
-const CACHE = 'card-app-v1.0.3';
+const CACHE = 'card-app-20260525063941';
 const ASSETS = [
   './',
   './index.html',
@@ -31,20 +31,17 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (!canHandle(req)) {
-    return;
-  }
-
   const isImage = req.destination === 'image';
 
   if (isImage) {
     e.respondWith(
-      fetch(req)
-        .then(res => {
-          cacheResponse(req, res);
-          return res;
-        })
-        .catch(() => caches.match(req))
+      fetch(req).then(res => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(req, clone));
+        }
+        return res;
+      }).catch(() => caches.match(req))
     );
     return;
   }
@@ -52,12 +49,13 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.match(req).then(cached => {
       if (cached) return cached;
-      return fetch(req)
-        .then(res => {
-          cacheResponse(req, res);
-          return res;
-        })
-        .catch(() => cached);
+      return fetch(req).then(res => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(req, clone));
+        }
+        return res;
+      }).catch(() => cached);
     })
   );
 });
