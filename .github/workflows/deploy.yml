@@ -7,6 +7,9 @@ on:
 
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
 
   deploy:
@@ -16,6 +19,8 @@ jobs:
     steps:
 
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
 
       - name: Bump cache version
 
@@ -35,5 +40,5 @@ jobs:
 
           git diff --staged --quiet || git commit -m "auto: bump cache version"
 
-          git push
+          git push origin HEAD:main
 

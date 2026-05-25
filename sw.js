@@ -1,10 +1,19 @@
-const CACHE = 'card-app-v1.0.1';
+const CACHE = 'card-app-v1.0.3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './cards-manifest.json'
+  './cards-manifest.json',
 ];
+
+const canHandle = req => req.url.startsWith('http://') || req.url.startsWith('https://');
+const isCacheable = (req, res) => canHandle(req) && res && res.ok;
+
+function cacheResponse(req, res) {
+  if (!isCacheable(req, res)) return;
+  const clone = res.clone();
+  caches.open(CACHE).then(c => c.put(req, clone)).catch(() => {});
+}
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -21,16 +30,34 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (!canHandle(req)) {
+    return;
+  }
+
+  const isImage = req.destination === 'image';
+
+  if (isImage) {
+    e.respondWith(
+      fetch(req)
+        .then(res => {
+          cacheResponse(req, res);
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
   e.respondWith(
-    caches.match(e.request).then(cached => {
+    caches.match(req).then(cached => {
       if (cached) return cached;
-      return fetch(e.request).then(res => {
-        if (res.ok) {
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
-        return res;
-      }).catch(() => cached);
+      return fetch(req)
+        .then(res => {
+          cacheResponse(req, res);
+          return res;
+        })
+        .catch(() => cached);
     })
   );
 });
