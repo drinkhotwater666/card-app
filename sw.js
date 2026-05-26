@@ -1,77 +1,95 @@
-const CACHE = 'card-app-20260525120713';
+const CACHE = 'card-app-20260526-2';
 const ASSETS = [
-  "./",
-  "./index.html",
-  "./manifest.json",
-  "./cards-manifest.json",
+  './',
+  './index.html',
+  './manifest.json',
+  './cards-manifest.json',
 ];
 
-const canHandle = (req) =>
-  req.url.startsWith("http://") || req.url.startsWith("https://");
-const isCacheable = (req, res) => canHandle(req) && res && res.ok;
+const canHandle = (req) => req.url.startsWith('http://') || req.url.startsWith('https://');
 
-function cacheResponse(req, res) {
-  if (!isCacheable(req, res)) return;
-  const clone = res.clone();
-  caches
-    .open(CACHE)
-    .then((c) => c.put(req, clone))
-    .catch(() => {});
+function shouldUseNetworkFirst(req) {
+  if (req.mode === 'navigate') return true;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return false;
+  return ['/index.html', '/manifest.json', '/cards-manifest.json', '/'].includes(url.pathname);
 }
 
-self.addEventListener("install", (e) => {
-  e.waitUntil(
+async function putInCache(req, res) {
+  if (!canHandle(req) || !res || !res.ok) return;
+  const cache = await caches.open(CACHE);
+  await cache.put(req, res.clone());
+}
+
+async function networkFirst(req) {
+  const cache = await caches.open(CACHE);
+  try {
+    const res = await fetch(req, { cache: 'no-store' });
+    await putInCache(req, res);
+    return res;
+  } catch {
+    const cached = await cache.match(req);
+    if (cached) return cached;
+    if (req.mode === 'navigate') {
+      return (await cache.match('./index.html')) || Response.error();
+    }
+    return Response.error();
+  }
+}
+
+async function staleWhileRevalidate(req) {
+  const cache = await caches.open(CACHE);
+  const cached = await cache.match(req);
+  const networkPromise = fetch(req)
+    .then(async (res) => {
+      await putInCache(req, res);
+      return res;
+    })
+    .catch(() => null);
+  if (cached) {
+    networkPromise.catch(() => {});
+    return cached;
+  }
+  return networkPromise.then((res) => res || Response.error());
+}
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
     caches
       .open(CACHE)
-      .then((c) => c.addAll(ASSETS))
+      .then((cache) => cache.addAll(ASSETS.map((url) => new Request(url, { cache: 'reload' }))))
       .then(() => self.skipWaiting()),
   );
 });
 
-self.addEventListener("activate", (e) => {
-  e.waitUntil(
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
     caches
       .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
-        ),
-      )
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
       .then(() => self.clients.claim()),
   );
 });
 
-self.addEventListener("fetch", (e) => {
-  const req = e.request;
-  const isImage = req.destination === "image";
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
-  if (isImage) {
-    e.respondWith(
-      fetch(req)
-        .then((res) => {
-          if (res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, clone));
-          }
-          return res;
-        })
-        .catch(() => caches.match(req)),
-    );
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (!canHandle(req) || req.method !== 'GET') return;
+
+  if (shouldUseNetworkFirst(req)) {
+    event.respondWith(networkFirst(req));
     return;
   }
 
-  e.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req)
-        .then((res) => {
-          if (res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, clone));
-          }
-          return res;
-        })
-        .catch(() => cached);
-    }),
-  );
+  if (req.destination === 'image') {
+    event.respondWith(staleWhileRevalidate(req));
+    return;
+  }
+
+  event.respondWith(networkFirst(req));
 });

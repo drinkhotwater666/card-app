@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="神秘牌阵">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json?v=20260526-2">
 <link rel="apple-touch-icon" href="tarot/愚人.png">
 <title>神秘牌阵</title>
 <style>
@@ -19,6 +19,7 @@
   --border:rgba(201,168,76,0.25);--border2:rgba(201,168,76,0.5);
   --radius:12px;
   --card-panel-width:160px;
+  --detail-card-min-width:356px;
   --safe-top:env(safe-area-inset-top,0px);
   --safe-bot:env(safe-area-inset-bottom,0px);
 }
@@ -98,23 +99,28 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 /* Card grid */
 .cards-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 0 8px;-webkit-overflow-scrolling:touch;}
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;align-content:start;}
-.cards-grid.details-visible{grid-template-columns:1fr;}
+.cards-grid.details-visible{grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--detail-card-min-width)),1fr));}
 .card-reading{border:1px solid var(--border);border-radius:14px;background:rgba(26,22,40,0.82);padding:14px;display:flex;flex-direction:column;gap:14px;animation:cardReveal 0.5s ease both;min-width:0;}
 .card-reading-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .card-index{width:24px;height:24px;border-radius:50%;background:rgba(13,10,26,0.8);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:11px;color:var(--gold);flex-shrink:0;}
 .card-title-group{display:flex;flex-direction:column;gap:4px;min-width:0;}
 .card-title{font-size:18px;font-weight:600;letter-spacing:0.05em;color:var(--gold3);}
 .card-state{font-size:11px;color:var(--text2);letter-spacing:0.12em;text-transform:uppercase;}
-.card-reading-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--card-panel-width)),var(--card-panel-width)));gap:12px;align-items:start;justify-content:start;}
-.card-reading.hide-details .card-reading-body{grid-template-columns:minmax(0,var(--card-panel-width));justify-content:center;}
-.card-face-panel,.card-detail-panel{border:1px solid var(--border);border-radius:12px;background:rgba(13,10,26,0.55);overflow:hidden;width:min(100%,var(--card-panel-width));justify-self:start;}
+.card-reading-body{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;overflow-y:hidden;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.card-reading-body::-webkit-scrollbar{height:4px;}
+.card-reading-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px;}
+.card-reading.hide-details .card-reading-body{justify-content:center;overflow-x:visible;}
+.card-face-panel,.card-detail-panel{border:1px solid var(--border);border-radius:12px;background:rgba(13,10,26,0.55);overflow:hidden;flex:0 0 var(--card-panel-width);width:var(--card-panel-width);}
 .card-reading.hide-details .card-face-panel{justify-self:center;}
 .card-face-panel{padding:8px;}
 .card-face-panel.reversed .card-face-img{transform:rotate(180deg);}
 .card-face-img,.card-detail-img{width:100%;height:auto;display:block;}
-.card-detail-panel{padding:10px;}
+.card-detail-panel{padding:10px;cursor:zoom-in;transition:border-color 0.2s ease,transform 0.2s ease;}
+.card-detail-panel:hover{border-color:var(--gold);transform:translateY(-1px);}
+.card-detail-panel:focus-visible{outline:none;border-color:var(--gold2);box-shadow:0 0 0 2px rgba(201,168,76,0.22);}
 .card-reading.hide-details .card-detail-panel{display:none;}
-.card-detail-caption{font-size:11px;color:var(--text2);letter-spacing:0.08em;padding:0 2px 8px;}
+.card-detail-caption{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--text2);letter-spacing:0.08em;padding:0 2px 8px;}
+.card-detail-zoom-hint{font-size:10px;color:var(--gold);letter-spacing:0.04em;white-space:nowrap;}
 .card-image-fallback{display:flex;align-items:center;justify-content:center;min-height:140px;padding:14px;color:var(--text2);font-size:12px;line-height:1.5;text-align:center;}
 @keyframes cardReveal{from{opacity:0;transform:scale(0.85) translateY(12px);}to{opacity:1;transform:scale(1) translateY(0);}}
 
@@ -138,6 +144,16 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 .copy-toast{position:fixed;bottom:calc(var(--safe-bot) + 24px);left:50%;transform:translateX(-50%);background:rgba(201,168,76,0.15);border:1px solid var(--gold);border-radius:8px;padding:8px 18px;font-size:12px;color:var(--gold2);letter-spacing:0.1em;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:99;}
 .copy-toast.show{opacity:1;}
 
+/* Detail lightbox */
+.detail-lightbox{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;z-index:140;opacity:1;transition:opacity 0.2s ease;}
+.detail-lightbox.hidden{opacity:0;pointer-events:none;}
+.detail-lightbox-backdrop{position:absolute;inset:0;background:rgba(4,3,10,0.8);backdrop-filter:blur(6px);}
+.detail-lightbox-dialog{position:relative;display:flex;flex-direction:column;gap:12px;width:auto;max-width:calc(100vw - 48px);max-height:none;margin:auto;padding:16px;border:1px solid var(--border2);border-radius:16px;background:rgba(18,14,30,0.96);box-shadow:0 20px 70px rgba(0,0,0,0.45);}
+.detail-lightbox-header{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.detail-lightbox-title{font-size:14px;color:var(--gold2);letter-spacing:0.08em;}
+.detail-lightbox-close{background:none;border:1px solid var(--border);border-radius:8px;color:var(--text2);padding:6px 10px;cursor:pointer;font-size:12px;}
+.detail-lightbox-image{display:block;max-width:100%;max-height:none;width:auto;height:auto;border-radius:12px;border:1px solid var(--border);background:#100d1b;}
+
 /* Loading */
 #loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:100;transition:opacity 0.4s;}
 #loading.gone{opacity:0;pointer-events:none;}
@@ -148,8 +164,8 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 .cards-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 @media (max-width:760px){
   .cards-grid,.cards-grid.details-visible{grid-template-columns:1fr;}
-  .card-reading-body{grid-template-columns:1fr;justify-content:center;}
-  .card-face-panel,.card-detail-panel{justify-self:center;}
+  .detail-lightbox{padding:16px;}
+  .detail-lightbox-dialog{max-width:calc(100vw - 32px);padding:14px;}
 }
 </style>
 </head>
@@ -157,6 +173,16 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 <div id="stars"></div>
 <div id="loading"><div class="loading-symbol">✦</div><div class="loading-text">Loading</div></div>
 <div class="copy-toast" id="copy-toast">已复制</div>
+<div class="detail-lightbox hidden" id="detail-lightbox" aria-hidden="true">
+  <div class="detail-lightbox-backdrop" data-close-lightbox="true"></div>
+  <div class="detail-lightbox-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-lightbox-title">
+    <div class="detail-lightbox-header">
+      <div class="detail-lightbox-title" id="detail-lightbox-title">详细信息</div>
+      <button class="detail-lightbox-close" id="detail-lightbox-close" type="button">关闭</button>
+    </div>
+    <img class="detail-lightbox-image" id="detail-lightbox-image" alt="详细信息大图">
+  </div>
+</div>
 
 <!-- Setup -->
 <div class="screen" id="setup">
@@ -254,6 +280,9 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 const starsEl=document.getElementById('stars');
 for(let i=0;i<60;i++){const s=document.createElement('div');s.className='star';s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${Math.random()*4}s;opacity:${0.3+Math.random()*0.7}`;starsEl.appendChild(s);}
 
+const APP_VERSION='20260526-2';
+const SW_RELOAD_KEY='card-app-sw-reloaded-'+APP_VERSION;
+
 // State
 let manifest={tarot:[],lenormand_traditional:[],lenormand_aecate:[]};
 let deck='tarot';
@@ -266,6 +295,10 @@ const questionEl=document.getElementById('question');
 const questionClearEl=document.getElementById('question-clear');
 const countDisplayEl=document.getElementById('count-display');
 const detailToggleEl=document.getElementById('detail-toggle');
+const detailLightboxEl=document.getElementById('detail-lightbox');
+const detailLightboxTitleEl=document.getElementById('detail-lightbox-title');
+const detailLightboxImageEl=document.getElementById('detail-lightbox-image');
+const detailLightboxCloseEl=document.getElementById('detail-lightbox-close');
 const countButtons=[...document.querySelectorAll('.count-btn')];
 const LENORMAND_TITLES={
   rider:'骑士',clover:'四叶草',ship:'船',house:'房子',tree:'树',clouds:'云',snake:'蛇',coffin:'棺材',
@@ -288,7 +321,7 @@ const VERSION_LABELS={
 
 async function loadManifest(){
   try{
-    const r=await fetch('./cards-manifest.json?t='+Date.now());
+    const r=await fetch('./cards-manifest.json?v='+APP_VERSION,{cache:'no-store'});
     if(!r.ok)throw new Error();
     manifest=await r.json();
     document.getElementById('tarot-count').textContent=manifest.tarot.length+' 张';
@@ -453,6 +486,48 @@ function setDetailVisibility(next){
   applyDetailVisibility();
 }
 
+function openDetailLightbox(title,detailPath){
+  detailLightboxTitleEl.textContent=title+' 详细信息';
+  detailLightboxImageEl.src=encodeURI(detailPath)+'?v='+APP_VERSION;
+  detailLightboxImageEl.alt=title+'详细信息大图';
+  detailLightboxEl.classList.remove('hidden');
+  detailLightboxEl.setAttribute('aria-hidden','false');
+}
+
+function closeDetailLightbox(){
+  if(detailLightboxEl.classList.contains('hidden'))return;
+  detailLightboxEl.classList.add('hidden');
+  detailLightboxEl.setAttribute('aria-hidden','true');
+  detailLightboxImageEl.removeAttribute('src');
+}
+
+async function registerServiceWorker(){
+  if(!('serviceWorker' in navigator))return;
+  try{
+    const registration=await navigator.serviceWorker.register('./sw.js?v='+APP_VERSION);
+    let reloading=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(reloading||sessionStorage.getItem(SW_RELOAD_KEY)==='1')return;
+      reloading=true;
+      sessionStorage.setItem(SW_RELOAD_KEY,'1');
+      window.location.reload();
+    });
+    registration.addEventListener('updatefound',()=>{
+      const nextWorker=registration.installing;
+      if(!nextWorker)return;
+      nextWorker.addEventListener('statechange',()=>{
+        if(nextWorker.state==='installed'&&navigator.serviceWorker.controller){
+          nextWorker.postMessage({type:'SKIP_WAITING'});
+        }
+      });
+    });
+    registration.update().catch(()=>{});
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='visible')registration.update().catch(()=>{});
+    });
+  }catch{}
+}
+
 function resetQuestion(){
   questionEl.value='';
   updateQuestionControls();
@@ -530,15 +605,25 @@ function renderCards(drawn){
 
     const detailPanel=document.createElement('div');
     detailPanel.className='card-detail-panel';
+    detailPanel.tabIndex=0;
+    detailPanel.setAttribute('role','button');
+    detailPanel.setAttribute('aria-label','查看'+title+'详细信息大图');
     const detailCaption=document.createElement('div');
     detailCaption.className='card-detail-caption';
-    detailCaption.textContent='详细信息';
+    detailCaption.innerHTML='<span>详细信息</span><span class="card-detail-zoom-hint">点击查看大图</span>';
     const detailImg=document.createElement('img');
     detailImg.className='card-detail-img';
     detailImg.src=encodeURI(detailPath);
     detailImg.alt=title+'详细信息';
     detailImg.loading='lazy';
     detailImg.onerror=()=>renderImageFallback(detailPanel,'详情图尚未就绪：'+detailPath,detailCaption);
+    detailPanel.addEventListener('click',()=>openDetailLightbox(title,detailPath));
+    detailPanel.addEventListener('keydown',e=>{
+      if(e.key==='Enter'||e.key===' '){
+        e.preventDefault();
+        openDetailLightbox(title,detailPath);
+      }
+    });
     detailPanel.appendChild(detailCaption);
     detailPanel.appendChild(detailImg);
 
@@ -584,7 +669,6 @@ function copyInfo(){
   });
 }
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 countButtons.forEach(btn=>{
   const delta=Number(btn.dataset.delta||0);
   btn.addEventListener('pointerdown',e=>{
@@ -621,11 +705,21 @@ countDisplayEl.addEventListener('keydown',e=>{
 });
 questionEl.addEventListener('input',updateQuestionControls);
 detailToggleEl.addEventListener('change',e=>setDetailVisibility(e.target.checked));
+detailLightboxEl.addEventListener('click',e=>{
+  if(e.target.dataset.closeLightbox==='true'||e.target===detailLightboxEl){
+    closeDetailLightbox();
+  }
+});
+detailLightboxCloseEl.addEventListener('click',closeDetailLightbox);
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeDetailLightbox();
+});
 window.addEventListener('resize',autoResizeQuestion);
 window.addEventListener('pageshow',()=>{
   if(!document.getElementById('result').classList.contains('hidden'))return;
   resetQuestion();
 });
+registerServiceWorker();
 loadManifest();
 </script>
 </body>
