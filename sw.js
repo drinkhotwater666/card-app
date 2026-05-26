@@ -1,4 +1,4 @@
-const CACHE = 'card-app-20260525120713';
+const CACHE = 'card-app-20260526093801';
 const ASSETS = [
   "./",
   "./index.html",
