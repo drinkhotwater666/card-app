@@ -18,6 +18,7 @@
   --text:#e8dfc8;--text2:#a89880;
   --border:rgba(201,168,76,0.25);--border2:rgba(201,168,76,0.5);
   --radius:12px;
+  --card-panel-width:160px;
   --safe-top:env(safe-area-inset-top,0px);
   --safe-bot:env(safe-area-inset-bottom,0px);
 }
@@ -96,25 +97,36 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 
 /* Card grid */
 .cards-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 0 8px;-webkit-overflow-scrolling:touch;}
-.cards-grid{display:flex;flex-direction:column;gap:16px;}
-.card-reading{border:1px solid var(--border);border-radius:14px;background:rgba(26,22,40,0.82);padding:14px;display:flex;flex-direction:column;gap:14px;animation:cardReveal 0.5s ease both;}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;align-content:start;}
+.cards-grid.details-visible{grid-template-columns:1fr;}
+.card-reading{border:1px solid var(--border);border-radius:14px;background:rgba(26,22,40,0.82);padding:14px;display:flex;flex-direction:column;gap:14px;animation:cardReveal 0.5s ease both;min-width:0;}
 .card-reading-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .card-index{width:24px;height:24px;border-radius:50%;background:rgba(13,10,26,0.8);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:11px;color:var(--gold);flex-shrink:0;}
 .card-title-group{display:flex;flex-direction:column;gap:4px;min-width:0;}
 .card-title{font-size:18px;font-weight:600;letter-spacing:0.05em;color:var(--gold3);}
 .card-state{font-size:11px;color:var(--text2);letter-spacing:0.12em;text-transform:uppercase;}
-.card-reading-body{display:grid;grid-template-columns:minmax(132px,160px) minmax(0,1fr);gap:12px;align-items:start;}
-.card-face-panel,.card-detail-panel{border:1px solid var(--border);border-radius:12px;background:rgba(13,10,26,0.55);overflow:hidden;}
+.card-reading-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--card-panel-width)),var(--card-panel-width)));gap:12px;align-items:start;justify-content:start;}
+.card-reading.hide-details .card-reading-body{grid-template-columns:minmax(0,var(--card-panel-width));justify-content:center;}
+.card-face-panel,.card-detail-panel{border:1px solid var(--border);border-radius:12px;background:rgba(13,10,26,0.55);overflow:hidden;width:min(100%,var(--card-panel-width));justify-self:start;}
+.card-reading.hide-details .card-face-panel{justify-self:center;}
 .card-face-panel{padding:8px;}
 .card-face-panel.reversed .card-face-img{transform:rotate(180deg);}
 .card-face-img,.card-detail-img{width:100%;height:auto;display:block;}
 .card-detail-panel{padding:10px;}
+.card-reading.hide-details .card-detail-panel{display:none;}
 .card-detail-caption{font-size:11px;color:var(--text2);letter-spacing:0.08em;padding:0 2px 8px;}
 .card-image-fallback{display:flex;align-items:center;justify-content:center;min-height:140px;padding:14px;color:var(--text2);font-size:12px;line-height:1.5;text-align:center;}
 @keyframes cardReveal{from{opacity:0;transform:scale(0.85) translateY(12px);}to{opacity:1;transform:scale(1) translateY(0);}}
 
 /* Info bar */
-.result-tools{display:flex;justify-content:flex-end;margin-top:10px;}
+.result-tools{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;}
+.detail-toggle{display:inline-flex;align-items:center;gap:10px;color:var(--text2);font-size:12px;letter-spacing:0.08em;cursor:pointer;user-select:none;}
+.detail-toggle input{position:absolute;opacity:0;pointer-events:none;}
+.detail-toggle-track{position:relative;width:40px;height:22px;border-radius:999px;border:1px solid var(--border2);background:rgba(13,10,26,0.75);transition:all 0.2s;flex-shrink:0;}
+.detail-toggle-track::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--text2);transition:transform 0.2s ease,background 0.2s ease;}
+.detail-toggle input:checked+.detail-toggle-track{background:rgba(201,168,76,0.18);border-color:var(--gold);}
+.detail-toggle input:checked+.detail-toggle-track::after{transform:translateX(18px);background:var(--gold2);}
+.detail-toggle-text{color:var(--text2);}
 .info-bar{flex-shrink:0;margin-top:10px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;}
 .info-question{font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5;}
 .info-question span{color:var(--text);margin-left:4px;}
@@ -135,8 +147,9 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
 .cards-scroll::-webkit-scrollbar{width:3px;}
 .cards-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 @media (max-width:760px){
-  .card-reading-body{grid-template-columns:1fr;}
-  .card-face-panel{max-width:180px;margin:0 auto;}
+  .cards-grid,.cards-grid.details-visible{grid-template-columns:1fr;}
+  .card-reading-body{grid-template-columns:1fr;justify-content:center;}
+  .card-face-panel,.card-detail-panel{justify-self:center;}
 }
 </style>
 </head>
@@ -220,6 +233,11 @@ body{display:flex;flex-direction:column;min-height:100dvh;padding-top:var(--safe
     <div class="cards-grid" id="cards-grid"></div>
   </div>
   <div class="result-tools">
+    <label class="detail-toggle" for="detail-toggle">
+      <span class="detail-toggle-text">显示详情</span>
+      <input type="checkbox" id="detail-toggle" aria-label="切换详细信息显示">
+      <span class="detail-toggle-track" aria-hidden="true"></span>
+    </label>
     <button class="copy-btn" onclick="copyInfo()" title="复制">
       <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
       复制结果
@@ -241,11 +259,13 @@ let manifest={tarot:[],lenormand_traditional:[],lenormand_aecate:[]};
 let deck='tarot';
 let lenVersion='traditional';
 let count=3;
+let showDetails=false;
 let lastDrawn=[];
 let lastQuestion='';
 const questionEl=document.getElementById('question');
 const questionClearEl=document.getElementById('question-clear');
 const countDisplayEl=document.getElementById('count-display');
+const detailToggleEl=document.getElementById('detail-toggle');
 const countButtons=[...document.querySelectorAll('.count-btn')];
 const LENORMAND_TITLES={
   rider:'骑士',clover:'四叶草',ship:'船',house:'房子',tree:'树',clouds:'云',snake:'蛇',coffin:'棺材',
@@ -417,6 +437,22 @@ function clearQuestion(){
   questionEl.focus();
 }
 
+function applyDetailVisibility(){
+  const grid=document.getElementById('cards-grid');
+  grid.classList.toggle('details-visible',showDetails);
+  grid.classList.toggle('details-hidden',!showDetails);
+  grid.querySelectorAll('.card-reading').forEach(card=>{
+    card.classList.toggle('show-details',showDetails);
+    card.classList.toggle('hide-details',!showDetails);
+  });
+  detailToggleEl.checked=showDetails;
+}
+
+function setDetailVisibility(next){
+  showDetails=Boolean(next);
+  applyDetailVisibility();
+}
+
 function resetQuestion(){
   questionEl.value='';
   updateQuestionControls();
@@ -453,7 +489,7 @@ function renderCards(drawn){
     const title=getCardTitle(c.src);
     const detailPath=getDetailImagePath(c.src);
     const card=document.createElement('article');
-    card.className='card-reading';
+    card.className='card-reading '+(showDetails?'show-details':'hide-details');
     card.style.animationDelay=(i*0.05)+'s';
 
     const header=document.createElement('div');
@@ -512,6 +548,7 @@ function renderCards(drawn){
     card.appendChild(body);
     grid.appendChild(card);
   });
+  applyDetailVisibility();
   document.querySelector('.cards-scroll').scrollTop=0;
 }
 
@@ -583,6 +620,7 @@ countDisplayEl.addEventListener('keydown',e=>{
   }
 });
 questionEl.addEventListener('input',updateQuestionControls);
+detailToggleEl.addEventListener('change',e=>setDetailVisibility(e.target.checked));
 window.addEventListener('resize',autoResizeQuestion);
 window.addEventListener('pageshow',()=>{
   if(!document.getElementById('result').classList.contains('hidden'))return;
